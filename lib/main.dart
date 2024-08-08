@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'MicrophoneController.dart'; // Ensure this import is correct
 
 void main() {
-  runApp(const MainApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => VoiceRecorder(),
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -20,8 +27,8 @@ class MainApp extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-      ),debugShowCheckedModeBanner: false,
-      
+      ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -34,17 +41,15 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-
   String? dropDownValue1;
   String? dropDownValue2;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final voiceRecorder = Provider.of<VoiceRecorder>(context);
+
     return Scaffold(
-      key: scaffoldKey,
-      backgroundColor: theme.primaryColor,
+      backgroundColor: Theme.of(context).primaryColor,
       body: SafeArea(
         child: Container(
           width: 416.0,
@@ -69,26 +74,25 @@ class _HomePageState extends State<HomePage> {
                       Align(
                         alignment: const AlignmentDirectional(-1.0, -1.0),
                         child: Padding(
-                          padding: const EdgeInsetsDirectional.fromSTEB(
-                              10.0, 0.0, 0.0, 20.0),
+                          padding: const EdgeInsetsDirectional.fromSTEB(10.0, 0.0, 0.0, 20.0),
                           child: Text(
                             'From...',
-                            style: theme.textTheme.bodyMedium,
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                            10.0, 0.0, 10.0, 0.0),
+                        padding: const EdgeInsetsDirectional.fromSTEB(10.0, 0.0, 10.0, 0.0),
                         child: Container(
                           width: 412.0,
                           height: 200.0,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: Colors.white,
                             border: Border.all(
                               width: 1.0,
                             ),
                           ),
+                          child: Text(voiceRecorder.transcription), // Use the getter for transcription
                         ),
                       ),
                     ],
@@ -114,17 +118,15 @@ class _HomePageState extends State<HomePage> {
                     Align(
                       alignment: const AlignmentDirectional(-1.0, -1.0),
                       child: Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                            10.0, 10.0, 0.0, 20.0),
+                        padding: const EdgeInsetsDirectional.fromSTEB(10.0, 10.0, 0.0, 20.0),
                         child: Text(
                           'To...',
-                          style: theme.textTheme.bodyMedium,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
-                          10.0, 0.0, 10.0, 0.0),
+                      padding: const EdgeInsetsDirectional.fromSTEB(10.0, 0.0, 10.0, 0.0),
                       child: Container(
                         width: 403.0,
                         height: 193.0,
@@ -146,8 +148,7 @@ class _HomePageState extends State<HomePage> {
                         mainAxisSize: MainAxisSize.max,
                         children: [
                           Padding(
-                            padding: const EdgeInsetsDirectional.fromSTEB(
-                                0.0, 60.0, 0.0, 36.0),
+                            padding: const EdgeInsetsDirectional.fromSTEB(0.0, 60.0, 0.0, 36.0),
                             child: Container(
                               width: 423.0,
                               height: 50.0,
@@ -158,33 +159,37 @@ class _HomePageState extends State<HomePage> {
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
                                   const Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                        10.0, 0.0, 140.0, 0.0),
+                                    padding: EdgeInsetsDirectional.fromSTEB(10.0, 0.0, 140.0, 0.0),
                                     child: Icon(
                                       Icons.play_arrow,
                                       color: Colors.black,
                                       size: 35.0,
                                     ),
                                   ),
-                                  Container(
-                                    width: 50.0,
-                                    height: 50.0,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.black,
-                                        width: 2.0,
+                                  GestureDetector(
+                                    onTap: () {
+                                      voiceRecorder.toggleRecording();
+                                      print('Microphone icon pressed ...');
+                                    },
+                                    child: AnimatedContainer(
+                                      width: 50.0,
+                                      height: 50.0,
+                                      duration: const Duration(milliseconds: 500),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.greenAccent,
+                                          width: 2.0,
+                                        ),
                                       ),
-                                    ),
-                                    child: IconButton(
-                                      icon: const Icon(
-                                        Icons.mic,
-                                        color: Colors.black,
-                                        size: 30.0,
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.mic,
+                                          color: Colors.black,
+                                          size: 30.0,
+                                        ),
                                       ),
-                                      onPressed: () {
-                                        print('IconButton pressed ...');
-                                      },
                                     ),
                                   ),
                                 ],
@@ -210,8 +215,7 @@ class _HomePageState extends State<HomePage> {
                                 Container(
                                   width: 150.0,
                                   height: 50.0,
-                                  margin: const EdgeInsetsDirectional.fromSTEB(
-                                      25.0, 0.0, 0.0, 0.0),
+                                  margin: const EdgeInsetsDirectional.fromSTEB(25.0, 0.0, 0.0, 0.0),
                                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -222,14 +226,13 @@ class _HomePageState extends State<HomePage> {
                                     value: dropDownValue1,
                                     isExpanded: true,
                                     underline: Container(),
-                                    items: ['Option 1', 'Option 2', 'Option 3']
-                                        .map((String value) {
+                                    items: ['Option 1', 'Option 2', 'Option 3'].map((String value) {
                                       return DropdownMenuItem<String>(
                                         value: value,
                                         child: Text(
                                           value,
                                           style: const TextStyle(
-                                            fontSize: 16.0, // Smaller font size
+                                            fontSize: 16.0,
                                           ),
                                         ),
                                       );
@@ -237,7 +240,7 @@ class _HomePageState extends State<HomePage> {
                                     hint: const Text(
                                       'Please select',
                                       style: TextStyle(
-                                        fontSize: 16.0, // Smaller font size
+                                        fontSize: 16.0,
                                       ),
                                     ),
                                     onChanged: (val) {
@@ -245,7 +248,7 @@ class _HomePageState extends State<HomePage> {
                                         dropDownValue1 = val;
                                       });
                                     },
-                                    style: theme.textTheme.bodyMedium,
+                                    style: Theme.of(context).textTheme.bodyMedium,
                                     dropdownColor: Colors.white,
                                     icon: const Icon(Icons.keyboard_arrow_down_rounded),
                                   ),
@@ -275,8 +278,7 @@ class _HomePageState extends State<HomePage> {
                                 Container(
                                   width: 150.0,
                                   height: 50.0,
-                                  margin: const EdgeInsetsDirectional.fromSTEB(
-                                      0.0, 0.0, 10.0, 0.0),
+                                  margin: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 10.0, 0.0),
                                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -287,14 +289,13 @@ class _HomePageState extends State<HomePage> {
                                     value: dropDownValue2,
                                     isExpanded: true,
                                     underline: Container(),
-                                    items: ['Option 1', 'Option 2', 'Option 3']
-                                        .map((String value) {
+                                    items: ['Option 1', 'Option 2', 'Option 3'].map((String value) {
                                       return DropdownMenuItem<String>(
                                         value: value,
                                         child: Text(
                                           value,
                                           style: const TextStyle(
-                                            fontSize: 16.0, // Smaller font size
+                                            fontSize: 16.0,
                                           ),
                                         ),
                                       );
@@ -302,7 +303,7 @@ class _HomePageState extends State<HomePage> {
                                     hint: const Text(
                                       'Please select',
                                       style: TextStyle(
-                                        fontSize: 16.0, // Smaller font size
+                                        fontSize: 16.0,
                                       ),
                                     ),
                                     onChanged: (val) {
@@ -310,7 +311,7 @@ class _HomePageState extends State<HomePage> {
                                         dropDownValue2 = val;
                                       });
                                     },
-                                    style: theme.textTheme.bodyMedium,
+                                    style: Theme.of(context).textTheme.bodyMedium,
                                     dropdownColor: Colors.white,
                                     icon: const Icon(Icons.keyboard_arrow_down_rounded),
                                   ),
