@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:record/record.dart';
@@ -20,6 +19,7 @@ class VoiceRecorder extends ChangeNotifier {
     _credentialsFuture = _loadCredentials();
     _checkPermission();
   }
+  
 
   Future<ServiceAccountCredentials> _loadCredentials() async {
     try {
@@ -80,6 +80,12 @@ class VoiceRecorder extends ChangeNotifier {
       debugPrint('Error during recording: $e');
     }
   }
+  String _languageCode = 'en-US'; // Default language code
+
+  set translatedFromCode(String code) {
+    _languageCode = code;
+    notifyListeners(); // Notify listeners when language code changes
+  }
 
   Future<void> _transcribeAudio() async {
     try {
@@ -103,7 +109,7 @@ class VoiceRecorder extends ChangeNotifier {
 
       final config = RecognitionConfig(
         encoding: 'LINEAR16', // Ensure this matches your file format
-        languageCode: 'en-US',
+        languageCode: _languageCode,
       );
 
       final response = await api.speech.recognize(
@@ -132,6 +138,11 @@ class VoiceRecorder extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error during transcription: $e');
     }
+  }
+  
+   void clearTranscription() {
+    _transcription = '';
+    notifyListeners();
   }
 
   String get transcription => _transcription; // Add getter for transcription

@@ -41,8 +41,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String? dropDownValue1;
-  String? dropDownValue2;
+  String? translatedFromLanguage;
+  String? translatedFromCode;
+  String? secondSelectedLanguage;
+  String? secondSelectedCode;
+
+  final List<Map<String, String>> _languages = [
+    {'language': 'Zulu (South Africa)', 'code': 'zu-ZA'},
+    {'language': 'Xhosa (South Africa)', 'code': 'xh-ZA'},
+    {'language': 'Venda (South Africa)', 'code': 've-ZA'},
+    {'language': 'Tswana (Latin, South Africa)', 'code': 'tn-Latn-ZA'},
+    {'language': 'Tsonga (South Africa)', 'code': 'ts-ZA'},
+    {'language': 'Swati (Latin, South Africa)', 'code': 'ss-Latn-ZA'},
+    {'language': 'Southern Sotho (South Africa)', 'code': 'st-ZA'},
+    {'language': 'English (South Africa)', 'code': 'en-ZA'},
+    {'language': 'Afrikaans (South Africa)', 'code': 'af-ZA'},
+    {'language': 'German (Germany)', 'code': 'de-DE'},
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +107,11 @@ class _HomePageState extends State<HomePage> {
                               width: 1.0,
                             ),
                           ),
-                          child: Text(voiceRecorder.transcription), // Use the getter for transcription
+                          child: Text(voiceRecorder.transcription.isNotEmpty 
+                                        ? voiceRecorder.transcription 
+                                        : 'Nothing was detected',
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                         ),
                       ),
                     ],
@@ -168,6 +187,10 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   GestureDetector(
                                     onTap: () {
+                                      // Clear transcription before starting new recording
+                                      voiceRecorder.clearTranscription();
+                                      // Update language code before toggling recording
+                                      voiceRecorder.translatedFromCode = translatedFromCode ?? 'en-US';
                                       voiceRecorder.toggleRecording();
                                       print('Microphone icon pressed ...');
                                     },
@@ -223,14 +246,14 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(5.0),
                                   ),
                                   child: DropdownButton<String>(
-                                    value: dropDownValue1,
+                                    value: translatedFromCode,
                                     isExpanded: true,
                                     underline: Container(),
-                                    items: ['Option 1', 'Option 2', 'Option 3'].map((String value) {
+                                    items: _languages.map((lang) {
                                       return DropdownMenuItem<String>(
-                                        value: value,
+                                        value: lang['code'],
                                         child: Text(
-                                          value,
+                                          lang['language']!,
                                           style: const TextStyle(
                                             fontSize: 16.0,
                                           ),
@@ -238,14 +261,15 @@ class _HomePageState extends State<HomePage> {
                                       );
                                     }).toList(),
                                     hint: const Text(
-                                      'Please select',
+                                      'Please select a Language',
                                       style: TextStyle(
                                         fontSize: 16.0,
                                       ),
                                     ),
-                                    onChanged: (val) {
+                                    onChanged: (String? newValue) {
                                       setState(() {
-                                        dropDownValue1 = val;
+                                        translatedFromCode = newValue;
+                                        translatedFromLanguage = _languages.firstWhere((lang) => lang['code'] == newValue)['language'];
                                       });
                                     },
                                     style: Theme.of(context).textTheme.bodyMedium,
@@ -278,7 +302,7 @@ class _HomePageState extends State<HomePage> {
                                 Container(
                                   width: 150.0,
                                   height: 50.0,
-                                  margin: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 10.0, 0.0),
+                                  margin: const EdgeInsetsDirectional.fromSTEB(25.0, 0.0, 0.0, 0.0),
                                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
@@ -286,14 +310,14 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(5.0),
                                   ),
                                   child: DropdownButton<String>(
-                                    value: dropDownValue2,
+                                    value: secondSelectedCode,
                                     isExpanded: true,
                                     underline: Container(),
-                                    items: ['Option 1', 'Option 2', 'Option 3'].map((String value) {
+                                    items: _languages.map((lang) {
                                       return DropdownMenuItem<String>(
-                                        value: value,
+                                        value: lang['code'],
                                         child: Text(
-                                          value,
+                                          lang['language']!,
                                           style: const TextStyle(
                                             fontSize: 16.0,
                                           ),
@@ -301,14 +325,15 @@ class _HomePageState extends State<HomePage> {
                                       );
                                     }).toList(),
                                     hint: const Text(
-                                      'Please select',
+                                      'Please select a Language',
                                       style: TextStyle(
                                         fontSize: 16.0,
                                       ),
                                     ),
-                                    onChanged: (val) {
+                                    onChanged: (String? newValue) {
                                       setState(() {
-                                        dropDownValue2 = val;
+                                        secondSelectedCode = newValue;
+                                        secondSelectedLanguage = _languages.firstWhere((lang) => lang['code'] == newValue)['language'];
                                       });
                                     },
                                     style: Theme.of(context).textTheme.bodyMedium,
