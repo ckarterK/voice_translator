@@ -9,6 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.1.2
+  googleapis: ^13.2.0
+  record: ^5.1.2
+  path_provider: ^2.1.4
+  googleapis_auth: ^1.6.0
+
+
+
+
 
 dev_dependencies:
   flutter_test:
@@ -17,3 +26,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/optical-pillar-431812-k3-03311e42dbb2.json
