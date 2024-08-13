@@ -6,14 +6,20 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:googleapis/speech/v1.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:voice_translator/TranslationService.dart';
 
 class VoiceRecorder extends ChangeNotifier {
   final AudioRecorder _record = AudioRecorder();
   bool _isRecording = false;
   String _filePath = '';
   String _transcription = '';
+  String _translation='';
   
   late final Future<ServiceAccountCredentials> _credentialsFuture;
+  // Initialize translation service
+  final TranslationService _translationService = TranslationService();
+  
+ 
 
   VoiceRecorder() {
     _credentialsFuture = _loadCredentials();
@@ -80,14 +86,19 @@ class VoiceRecorder extends ChangeNotifier {
       debugPrint('Error during recording: $e');
     }
   }
-  String _languageCode = 'en-US'; // Default language code
+  String _languageFromCode = 'en-US'; // Default language code
+  String _languageToCode = 'en-US'; // Default language code
 
   set translatedFromCode(String code) {
-    _languageCode = code;
+    _languageFromCode = code;
+    notifyListeners(); // Notify listeners when language code changes
+  }
+    set translatedToCode(String code) {
+    _languageToCode = code;
     notifyListeners(); // Notify listeners when language code changes
   }
 
-  Future<void> _transcribeAudio() async {
+    Future<void> _transcribeAudio() async {
     try {
       final credentials = await _credentialsFuture;
       final authClient = await clientViaServiceAccount(credentials, [SpeechApi.cloudPlatformScope]);
@@ -104,12 +115,12 @@ class VoiceRecorder extends ChangeNotifier {
       debugPrint("Encoded audio: $base64String");
 
       final request = RecognitionAudio.fromJson({
-        'content': base64String, // Correct base64 encoding used here
+        'content': base64String,
       });
 
       final config = RecognitionConfig(
-        encoding: 'LINEAR16', // Ensure this matches your file format
-        languageCode: _languageCode,
+        encoding: 'LINEAR16',
+        languageCode: _languageFromCode,
       );
 
       final response = await api.speech.recognize(
@@ -120,18 +131,16 @@ class VoiceRecorder extends ChangeNotifier {
       );
 
       if (response.results != null && response.results!.isNotEmpty) {
-        debugPrint('Response: ${response.toJson()}');
-        response.results!.forEach((result) {
-          result.alternatives!.forEach((alternative) {
-            debugPrint('Alternative transcript: ${alternative.transcript}');
-          });
-        });
         final transcript = response.results!
             .map((result) => result.alternatives!.first.transcript)
             .join(' ');
         _transcription = transcript;
-        notifyListeners(); // Notify listeners of state change
-        debugPrint('Transcription: $_transcription');
+        notifyListeners();
+
+        // Translate the transcription
+        final translatedText = await _translationService.translateText(transcript, _languageToCode); // Example target language: French
+        _translation=translatedText;
+        debugPrint('Translated Text: $translatedText');
       } else {
         debugPrint('No transcription result or empty response');
       }
@@ -146,6 +155,7 @@ class VoiceRecorder extends ChangeNotifier {
   }
 
   String get transcription => _transcription; // Add getter for transcription
+  String get translation => _translation; // Add getter for transcription
 
   @override
   void dispose() {

@@ -43,20 +43,29 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String? translatedFromLanguage;
   String? translatedFromCode;
-  String? secondSelectedLanguage;
-  String? secondSelectedCode;
+  String? translatedToLanguage;
+  String? translatedToCode;
 
-  final List<Map<String, String>> _languages = [
-    {'language': 'Zulu (South Africa)', 'code': 'zu-ZA'},
-    {'language': 'Xhosa (South Africa)', 'code': 'xh-ZA'},
-    {'language': 'Venda (South Africa)', 'code': 've-ZA'},
-    {'language': 'Tswana (Latin, South Africa)', 'code': 'tn-Latn-ZA'},
-    {'language': 'Tsonga (South Africa)', 'code': 'ts-ZA'},
-    {'language': 'Swati (Latin, South Africa)', 'code': 'ss-Latn-ZA'},
-    {'language': 'Southern Sotho (South Africa)', 'code': 'st-ZA'},
-    {'language': 'English (South Africa)', 'code': 'en-ZA'},
-    {'language': 'Afrikaans (South Africa)', 'code': 'af-ZA'},
-    {'language': 'German (Germany)', 'code': 'de-DE'},
+  final List<Map<String, String>> translatedFromLanguages = [
+    {'language': 'Zulu', 'code': 'zu-ZA'},
+    {'language': 'Xhosa', 'code': 'xh-ZA'},
+    {'language': 'Venda', 'code': 've-ZA'},
+    {'language': 'Tswana', 'code': 'tn-Latn-ZA'},
+    {'language': 'Tsonga', 'code': 'ts-ZA'},
+    {'language': 'Swati', 'code': 'ss-Latn-ZA'},
+    {'language': 'Southern Sotho', 'code': 'st-ZA'},
+    {'language': 'English', 'code': 'en-ZA'},
+    {'language': 'Afrikaans', 'code': 'af-ZA'},
+    {'language': 'German', 'code': 'de-DE'},
+  ];
+  final List<Map<String, String>> translatedToLanguages = [
+    {'language': 'Zulu', 'code': 'zu'},
+    {'language': 'Xhosa', 'code': 'xh'},
+    {'language': 'Tsonga', 'code': 'ts'},
+    {'language': 'Southern Sotho', 'code': 'st'},
+    {'language': 'English', 'code': 'en'},
+    {'language': 'Afrikaans', 'code': 'af'},
+    {'language': 'German', 'code': 'de'},
   ];
 
   @override
@@ -90,7 +99,7 @@ class _HomePageState extends State<HomePage> {
                         alignment: const AlignmentDirectional(-1.0, -1.0),
                         child: Padding(
                           padding: const EdgeInsetsDirectional.fromSTEB(10.0, 0.0, 0.0, 20.0),
-                          child: Text(
+                          child: Text(translatedFromLanguage??
                             'From...',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
@@ -109,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           child: Text(voiceRecorder.transcription.isNotEmpty 
                                         ? voiceRecorder.transcription 
-                                        : 'Nothing was detected',
+                                        : 'click and start recording',
                                       style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
@@ -138,7 +147,7 @@ class _HomePageState extends State<HomePage> {
                       alignment: const AlignmentDirectional(-1.0, -1.0),
                       child: Padding(
                         padding: const EdgeInsetsDirectional.fromSTEB(10.0, 10.0, 0.0, 20.0),
-                        child: Text(
+                        child: Text(translatedToLanguage??
                           'To...',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
@@ -155,6 +164,11 @@ class _HomePageState extends State<HomePage> {
                             width: 1.0,
                           ),
                         ),
+                        child: Text(voiceRecorder.translation.isNotEmpty 
+                                        ? voiceRecorder.translation 
+                                        : '',
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                       ),
                     ),
                     Container(
@@ -191,6 +205,7 @@ class _HomePageState extends State<HomePage> {
                                       voiceRecorder.clearTranscription();
                                       // Update language code before toggling recording
                                       voiceRecorder.translatedFromCode = translatedFromCode ?? 'en-US';
+                                       voiceRecorder.translatedToCode = translatedToCode ?? 'en-US';
                                       voiceRecorder.toggleRecording();
                                       print('Microphone icon pressed ...');
                                     },
@@ -249,7 +264,7 @@ class _HomePageState extends State<HomePage> {
                                     value: translatedFromCode,
                                     isExpanded: true,
                                     underline: Container(),
-                                    items: _languages.map((lang) {
+                                    items: translatedFromLanguages.map((lang) {
                                       return DropdownMenuItem<String>(
                                         value: lang['code'],
                                         child: Text(
@@ -269,7 +284,7 @@ class _HomePageState extends State<HomePage> {
                                     onChanged: (String? newValue) {
                                       setState(() {
                                         translatedFromCode = newValue;
-                                        translatedFromLanguage = _languages.firstWhere((lang) => lang['code'] == newValue)['language'];
+                                        translatedFromLanguage = translatedFromLanguages.firstWhere((lang) => lang['code'] == newValue)['language'];
                                       });
                                     },
                                     style: Theme.of(context).textTheme.bodyMedium,
@@ -310,10 +325,10 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(5.0),
                                   ),
                                   child: DropdownButton<String>(
-                                    value: secondSelectedCode,
+                                    value: translatedToCode,
                                     isExpanded: true,
                                     underline: Container(),
-                                    items: _languages.map((lang) {
+                                    items: translatedToLanguages.map((lang) {
                                       return DropdownMenuItem<String>(
                                         value: lang['code'],
                                         child: Text(
@@ -332,8 +347,8 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     onChanged: (String? newValue) {
                                       setState(() {
-                                        secondSelectedCode = newValue;
-                                        secondSelectedLanguage = _languages.firstWhere((lang) => lang['code'] == newValue)['language'];
+                                        translatedToCode = newValue;
+                                        translatedToLanguage = translatedToLanguages.firstWhere((lang) => lang['code'] == newValue)['language'];
                                       });
                                     },
                                     style: Theme.of(context).textTheme.bodyMedium,
