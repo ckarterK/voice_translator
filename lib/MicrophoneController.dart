@@ -2,30 +2,29 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:googleapis_auth/auth_io.dart';
-import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:googleapis/speech/v1.dart';
+import 'package:record/record.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:voice_translator/TranslationService.dart';
+import 'package:voice_translator/TranscriptionService.dart'; // Import the new class
 
 class VoiceRecorder extends ChangeNotifier {
   final AudioRecorder _record = AudioRecorder();
   bool _isRecording = false;
   String _filePath = '';
   String _transcription = '';
-  String _translation='';
-  
+  String _translation = '';
+  bool get isRecording => _isRecording;
+
   late final Future<ServiceAccountCredentials> _credentialsFuture;
-  // Initialize translation service
   final TranslationService _translationService = TranslationService();
-  
- 
+  late final TranscriptionService _transcriptionService;
 
   VoiceRecorder() {
     _credentialsFuture = _loadCredentials();
+    _transcriptionService = TranscriptionService(_credentialsFuture);
     _checkPermission();
   }
-  
 
   Future<ServiceAccountCredentials> _loadCredentials() async {
     try {
@@ -56,6 +55,7 @@ class VoiceRecorder extends ChangeNotifier {
         if (filePath != null) {
           _filePath = filePath;
           debugPrint('Recording stopped, saved to: $_filePath');
+          
           await _transcribeAudio();
         } else {
           debugPrint('Failed to stop recording');
@@ -64,13 +64,13 @@ class VoiceRecorder extends ChangeNotifier {
         if (await _record.hasPermission()) {
           Directory appDocDir = await getApplicationDocumentsDirectory();
           String appDocPath = appDocDir.path;
-          String path = '$appDocPath/audio_record.wav'; // Ensure file extension matches the encoding
+          String path = '$appDocPath/audio_record.wav';
 
           await _record.start(
             const RecordConfig(
-              encoder: AudioEncoder.wav, // Make sure this matches your recording format
+              encoder: AudioEncoder.wav,
               sampleRate: 16000,
-              numChannels: 1, // Adjust according to your recording settings
+              numChannels: 1,
             ),
             path: path,
           );
@@ -81,85 +81,50 @@ class VoiceRecorder extends ChangeNotifier {
       }
 
       _isRecording = !_isRecording;
-      notifyListeners(); // Use notifyListeners to update listeners instead of setState
+      notifyListeners();
     } catch (e) {
       debugPrint('Error during recording: $e');
     }
   }
-  String _languageFromCode = 'en-US'; // Default language code
-  String _languageToCode = 'en-US'; // Default language code
+
+  String _languageFromCode = 'en-US';
+  String _languageToCode = 'en-US';
 
   set translatedFromCode(String code) {
     _languageFromCode = code;
-    notifyListeners(); // Notify listeners when language code changes
+    notifyListeners();
   }
-    set translatedToCode(String code) {
+
+  set translatedToCode(String code) {
     _languageToCode = code;
-    notifyListeners(); // Notify listeners when language code changes
+    notifyListeners();
   }
 
-    Future<void> _transcribeAudio() async {
+  Future<void> _transcribeAudio() async {
     try {
-      final credentials = await _credentialsFuture;
-      final authClient = await clientViaServiceAccount(credentials, [SpeechApi.cloudPlatformScope]);
-      final api = SpeechApi(authClient);
+      final transcript = await _transcriptionService.transcribeAudio(_filePath, _languageFromCode);
+      _transcription = transcript;
+      notifyListeners();
 
-      final file = File(_filePath);
-      if (!await file.exists()) {
-        debugPrint('Audio file does not exist at: $_filePath');
-        return;
-      }
-
-      final audioBytes = file.readAsBytesSync();
-      final base64String = base64Encode(audioBytes);
-      debugPrint("Encoded audio: $base64String");
-
-      final request = RecognitionAudio.fromJson({
-        'content': base64String,
-      });
-
-      final config = RecognitionConfig(
-        encoding: 'LINEAR16',
-        languageCode: _languageFromCode,
-      );
-
-      final response = await api.speech.recognize(
-        RecognizeRequest(
-          config: config,
-          audio: request,
-        ),
-      );
-
-      if (response.results != null && response.results!.isNotEmpty) {
-        final transcript = response.results!
-            .map((result) => result.alternatives!.first.transcript)
-            .join(' ');
-        _transcription = transcript;
-        notifyListeners();
-
-        // Translate the transcription
-        final translatedText = await _translationService.translateText(transcript, _languageToCode); // Example target language: French
-        _translation=translatedText;
-        debugPrint('Translated Text: $translatedText');
-      } else {
-        debugPrint('No transcription result or empty response');
-      }
+      final translatedText = await _translationService.translateText(transcript, _languageToCode);
+      _translation = translatedText;
+      debugPrint('Translated Text: $translatedText');
     } catch (e) {
       debugPrint('Error during transcription: $e');
     }
   }
-  
-   void clearTranscription() {
+
+  void clearTranscription() {
     _transcription = '';
     notifyListeners();
   }
 
-  String get transcription => _transcription; // Add getter for transcription
-  String get translation => _translation; // Add getter for transcription
+  String get transcription => _transcription;
+  String get translation => _translation;
 
   @override
   void dispose() {
-    _record.dispose(); // Clean up resources if necessary
+    _record.dispose();
     super.dispose();
   }
 }
