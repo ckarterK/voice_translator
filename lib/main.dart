@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'MicrophoneController.dart'; // Ensure this import is correct
+import 'package:voice_translator/ComboBoxController.dart';
+import 'MicrophoneDesign.dart';
+import 'ComboBoxDesign.dart';
+import 'MicrophoneController.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => VoiceRecorder(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => VoiceRecorder()),
+        ChangeNotifierProvider(create: (context) => LanguageController()),
+      ],
       child: const MainApp(),
     ),
   );
@@ -43,26 +49,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String? translatedFromLanguage;
   String? translatedFromCode;
-  String? secondSelectedLanguage;
-  String? secondSelectedCode;
-
-  final List<Map<String, String>> _languages = [
-    {'language': 'Zulu (South Africa)', 'code': 'zu-ZA'},
-    {'language': 'Xhosa (South Africa)', 'code': 'xh-ZA'},
-    {'language': 'Venda (South Africa)', 'code': 've-ZA'},
-    {'language': 'Tswana (Latin, South Africa)', 'code': 'tn-Latn-ZA'},
-    {'language': 'Tsonga (South Africa)', 'code': 'ts-ZA'},
-    {'language': 'Swati (Latin, South Africa)', 'code': 'ss-Latn-ZA'},
-    {'language': 'Southern Sotho (South Africa)', 'code': 'st-ZA'},
-    {'language': 'English (South Africa)', 'code': 'en-ZA'},
-    {'language': 'Afrikaans (South Africa)', 'code': 'af-ZA'},
-    {'language': 'German (Germany)', 'code': 'de-DE'},
-  ];
+  String? translatedToLanguage;
 
   @override
   Widget build(BuildContext context) {
     final voiceRecorder = Provider.of<VoiceRecorder>(context);
-
+    final languageController = Provider.of<LanguageController>(context);
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
       body: SafeArea(
@@ -90,9 +82,9 @@ class _HomePageState extends State<HomePage> {
                         alignment: const AlignmentDirectional(-1.0, -1.0),
                         child: Padding(
                           padding: const EdgeInsetsDirectional.fromSTEB(10.0, 0.0, 0.0, 20.0),
-                          child: Text(
-                            'From...',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                          child: Text(languageController.fromLanguage ??
+                              'From...',
+                              style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
                       ),
@@ -107,10 +99,11 @@ class _HomePageState extends State<HomePage> {
                               width: 1.0,
                             ),
                           ),
-                          child: Text(voiceRecorder.transcription.isNotEmpty 
-                                        ? voiceRecorder.transcription 
-                                        : 'Nothing was detected',
-                                      style: Theme.of(context).textTheme.bodyMedium,
+                          child: Text(
+                            voiceRecorder.transcription.isNotEmpty
+                                ? voiceRecorder.transcription
+                                : 'click and start recording',
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
                       ),
@@ -139,7 +132,7 @@ class _HomePageState extends State<HomePage> {
                       child: Padding(
                         padding: const EdgeInsetsDirectional.fromSTEB(10.0, 10.0, 0.0, 20.0),
                         child: Text(
-                          'To...',
+                          languageController.toLanguage  ?? 'To...',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
@@ -150,10 +143,16 @@ class _HomePageState extends State<HomePage> {
                         width: 403.0,
                         height: 193.0,
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: Colors.white,
                           border: Border.all(
                             width: 1.0,
                           ),
+                        ),
+                        child: Text(
+                          voiceRecorder.translation.isNotEmpty
+                              ? voiceRecorder.translation
+                              : '',
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
                     ),
@@ -174,176 +173,23 @@ class _HomePageState extends State<HomePage> {
                               decoration: const BoxDecoration(
                                 color: Colors.white24,
                               ),
-                              child: Row(
+                              child: const Row(
                                 mainAxisSize: MainAxisSize.max,
                                 children: [
-                                  const Padding(
+                                  Padding(
                                     padding: EdgeInsetsDirectional.fromSTEB(10.0, 0.0, 140.0, 0.0),
                                     child: Icon(
                                       Icons.play_arrow,
-                                      color: Colors.black,
+                                      color: Colors.white,
                                       size: 35.0,
                                     ),
                                   ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      // Clear transcription before starting new recording
-                                      voiceRecorder.clearTranscription();
-                                      // Update language code before toggling recording
-                                      voiceRecorder.translatedFromCode = translatedFromCode ?? 'en-US';
-                                      voiceRecorder.toggleRecording();
-                                      print('Microphone icon pressed ...');
-                                    },
-                                    child: AnimatedContainer(
-                                      width: 50.0,
-                                      height: 50.0,
-                                      duration: const Duration(milliseconds: 500),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.greenAccent,
-                                          width: 2.0,
-                                        ),
-                                      ),
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.mic,
-                                          color: Colors.black,
-                                          size: 30.0,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                  MicrophoneDesign()
                                 ],
                               ),
                             ),
                           ),
-                          Container(
-                            width: 412.0,
-                            height: 90.0,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(25.0),
-                                topRight: Radius.circular(25.0),
-                              ),
-                              border: Border.all(
-                                width: 1.0,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Container(
-                                  width: 150.0,
-                                  height: 50.0,
-                                  margin: const EdgeInsetsDirectional.fromSTEB(25.0, 0.0, 0.0, 0.0),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(color: Colors.black),
-                                    borderRadius: BorderRadius.circular(5.0),
-                                  ),
-                                  child: DropdownButton<String>(
-                                    value: translatedFromCode,
-                                    isExpanded: true,
-                                    underline: Container(),
-                                    items: _languages.map((lang) {
-                                      return DropdownMenuItem<String>(
-                                        value: lang['code'],
-                                        child: Text(
-                                          lang['language']!,
-                                          style: const TextStyle(
-                                            fontSize: 16.0,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                    hint: const Text(
-                                      'Please select a Language',
-                                      style: TextStyle(
-                                        fontSize: 16.0,
-                                      ),
-                                    ),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        translatedFromCode = newValue;
-                                        translatedFromLanguage = _languages.firstWhere((lang) => lang['code'] == newValue)['language'];
-                                      });
-                                    },
-                                    style: Theme.of(context).textTheme.bodyMedium,
-                                    dropdownColor: Colors.white,
-                                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                                  ),
-                                ),
-                                Container(
-                                  width: 50.0,
-                                  height: 55.0,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.white,
-                                  ),
-                                  child: const Column(
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: [
-                                      Icon(
-                                        Icons.arrow_back_sharp,
-                                        color: Colors.black,
-                                        size: 24.0,
-                                      ),
-                                      Icon(
-                                        Icons.arrow_forward_sharp,
-                                        color: Colors.black,
-                                        size: 24.0,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 150.0,
-                                  height: 50.0,
-                                  margin: const EdgeInsetsDirectional.fromSTEB(25.0, 0.0, 0.0, 0.0),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(color: Colors.black),
-                                    borderRadius: BorderRadius.circular(5.0),
-                                  ),
-                                  child: DropdownButton<String>(
-                                    value: secondSelectedCode,
-                                    isExpanded: true,
-                                    underline: Container(),
-                                    items: _languages.map((lang) {
-                                      return DropdownMenuItem<String>(
-                                        value: lang['code'],
-                                        child: Text(
-                                          lang['language']!,
-                                          style: const TextStyle(
-                                            fontSize: 16.0,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                    hint: const Text(
-                                      'Please select a Language',
-                                      style: TextStyle(
-                                        fontSize: 16.0,
-                                      ),
-                                    ),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        secondSelectedCode = newValue;
-                                        secondSelectedLanguage = _languages.firstWhere((lang) => lang['code'] == newValue)['language'];
-                                      });
-                                    },
-                                    style: Theme.of(context).textTheme.bodyMedium,
-                                    dropdownColor: Colors.white,
-                                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          const LanguageSelection(),
                         ],
                       ),
                     ),
